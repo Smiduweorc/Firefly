@@ -1,15 +1,23 @@
 {
-	"name": "@grml/lib-template",
-	"version": "0.0.0",
-	"description": "ESM-friendly TypeScript library template.",
+	"name": "firefly-js",
+	"version": "1.0.0",
+	"description": "Resilience harness for TypeScript: retries, timeouts, circuit breakers, bulkheads and rate limits, composed as one policy.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "dist/index.js",
 	"types": "dist/types/index.d.ts",
 	"exports": {
 		".": {
 			"types": "./dist/types/index.d.ts",
 			"default": "./dist/index.js"
+		},
+		"./http": {
+			"types": "./dist/types/http.d.ts",
+			"default": "./dist/http.js"
 		}
+	},
+	"engines": {
+		"node": ">=22"
 	},
 	"files": [
 		"dist"
@@ -20,6 +28,7 @@
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"test": "node --import tsx --test \"tests/**/*.test.ts\"",
+		"test:dist": "npm run build && node --test \"tests/dist/*.test.js\"",
 		"docs": "typedoc",
 		"changelog": "git-cliff -o CHANGELOG.md",
 		"prepare": "lefthook install"
@@ -27,14 +36,19 @@
 	"keywords": [
 		"typescript",
 		"esm",
-		"template",
-		"library"
+		"retry",
+		"backoff",
+		"timeout",
+		"circuit-breaker",
+		"bulkhead",
+		"rate-limit",
+		"resilience"
 	],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/grMLEqomlkkU5Eeinz4brIrOVCUCkJuN/lib-template.git"
+		"url": "git+https://github.com/Smiduweorc/firefly.git"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^21.2.2",

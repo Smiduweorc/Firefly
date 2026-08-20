@@ -1,9 +1,22 @@
 {
 	"$schema": "https://typedoc.org/schema.json",
-	"entryPoints": ["index.ts"],
+	"entryPoints": ["index.ts", "http.ts"],
+	"projectDocuments": [
+		"guides/concepts.md",
+		"guides/dependency.md",
+		"guides/policies.md",
+		"guides/http.md",
+		"guides/testing.md",
+		"guides/boundaries.md"
+	],
 	"out": "docs",
 	"includeVersion": true,
 	"excludePrivate": true,
 	"excludeInternal": true,
-	"readme": "README.md"
+	"readme": "README.md",
+	"treatWarningsAsErrors": true,
+	"navigationLinks": {
+		"GitHub": "https://github.com/Smiduweorc/firefly",
+		"Smiduweorc": "https://smiduweorc.github.io/"
+	}
 }

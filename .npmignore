@@ -3,7 +3,9 @@
 /src
 /tests
 /index.ts
+/http.ts
 /docs
+/guides
 node_modules
 eslint*
 tsconfig.json

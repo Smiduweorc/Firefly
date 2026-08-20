@@ -11,6 +11,17 @@ export default tseslint.config(
 		files: ["**/*.{js,mjs,cjs,ts,tsx}"],
 		languageOptions: {
 			parser: tseslint.parser,
+			// Web-standard globals the package uses. TypeScript files get these
+			// from @types/node; plain JavaScript needs them declared here.
+			globals: {
+				AbortController: "readonly",
+				AbortSignal: "readonly",
+				DOMException: "readonly",
+				Headers: "readonly",
+				Request: "readonly",
+				Response: "readonly",
+				URL: "readonly",
+			},
 		},
 		rules: {
 			quotes: ["error", "double"],

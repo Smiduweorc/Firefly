@@ -8,6 +8,7 @@
 	"include": [
 		"./**/*.ts",
 		"../index.ts",
+		"../http.ts",
 		"../src/**/*.ts"
 	],
 	"exclude": [
