@@ -1,4 +1,4 @@
-# firefly-js
+# firefly-limiter
 
 ![logo](https://raw.githubusercontent.com/Smiduweorc/firefly/master/assets/logo.png)
 
@@ -40,21 +40,21 @@ The order the policies go in has one right answer, so `Dependency` assembles it 
 ## Quick start
 
 ```sh
-npm install firefly-js
+npm install firefly-limiter
 ```
 
 **1. Describe the thing you call.** A `Dependency` is one upstream and every decision you have made about calling it. Build it once, next to the client it protects, and share it.
 
 ```ts
-import { Dependency, exponential, retryAnything } from "firefly-js";
+import { Dependency, exponential, retryAnything } from "firefly-";
 
 export const rates = new Dependency({
-	name: "rates",
-	attempts: 3,
-	backoff: exponential({ base: 200, max: 5_000 }),
-	shouldRetry: retryAnything,
-	deadline: 2_000,
-	breaker: { threshold: 5, resetAfter: 30_000 },
+ name: "rates",
+ attempts: 3,
+ backoff: exponential({ base: 200, max: 5_000 }),
+ shouldRetry: retryAnything,
+ deadline: 2_000,
+ breaker: { threshold: 5, resetAfter: 30_000 },
 });
 ```
 
@@ -70,19 +70,19 @@ const today = await rates.run((signal) => readRates(signal));
 
 ```ts
 const today = await rates.run(readRates, {
-	share: "today",         // twenty callers, one request
-	fallback: () => cached, // an answer for a call that failed all the way through
+ share: "today",         // twenty callers, one request
+ fallback: () => cached, // an answer for a call that failed all the way through
 });
 ```
 
 **4. Or hand the same policy to an HTTP client.** `transport` wraps a `fetch`-shaped function, so a client never imports Firefly:
 
 ```ts
-import { retryableTransportError, transport } from "firefly-js/http";
+import { retryableTransportError, transport } from "firefly-limiter/http";
 
 const api = new ApiClient({
-	baseUrl: "https://api.acme.com/v1",
-	transport: transport(fetch, rates.policy),
+ baseUrl: "https://api.acme.com/v1",
+ transport: transport(fetch, rates.policy),
 });
 ```
 
@@ -104,7 +104,7 @@ Guides and the full API reference: **<https://smiduweorc.github.io/firefly/>**
 | [Concepts](https://smiduweorc.github.io/firefly/documents/Concepts.html) | Actions, policies, stack order, signals, clocks, events, errors |
 | [Dependency](https://smiduweorc.github.io/firefly/documents/Dependency.html) | The front door: every option, per-call options, health |
 | [Policies](https://smiduweorc.github.io/firefly/documents/Policies.html) | Each policy on its own, and the numbers that matter |
-| [HTTP](https://smiduweorc.github.io/firefly/documents/HTTP.html) | `firefly-js/http`, body replay, `Retry-After`, Aphid and dung beetle |
+| [HTTP](https://smiduweorc.github.io/firefly/documents/HTTP.html) | `firefly-limiter/http`, body replay, `Retry-After`, Aphid and dung beetle |
 | [Testing](https://smiduweorc.github.io/firefly/documents/Testing.html) | Virtual clocks, and asserting on decisions |
 | [Boundaries](https://smiduweorc.github.io/firefly/documents/Boundaries.html) | What this package will not do, and where that work goes |
 

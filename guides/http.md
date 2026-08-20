@@ -4,15 +4,15 @@ title: HTTP
 
 # HTTP
 
-`firefly-js/http` is a separate entry point. Nothing in the core
+`firefly-limiter/http` is a separate entry point. Nothing in the core
 surface imports it, so a consumer with no HTTP in sight pulls in no HTTP.
 
 ```ts
-import { transport, retryableTransportError } from "firefly-js/http";
+import { transport, retryableTransportError } from "firefly-limiter/http";
 
 const api = new ApiClient({
-	baseUrl: "https://api.acme.com/v1",
-	transport: transport(fetch, payments.policy),
+ baseUrl: "https://api.acme.com/v1",
+ transport: transport(fetch, payments.policy),
 });
 ```
 
@@ -44,9 +44,9 @@ This is also why the `shouldRetry` for a policy handed to `transport` is
 
 ```ts
 retry({
-	attempts: 3,
-	backoff: exponential({ base: 200, max: 10_000 }),
-	shouldRetry: retryableTransportError,
+ attempts: 3,
+ backoff: exponential({ base: 200, max: 10_000 }),
+ shouldRetry: retryableTransportError,
 });
 ```
 
@@ -120,16 +120,16 @@ A transport applies to every call, which is right for a breaker and wrong for a
 payment endpoint that needs longer than a search box:
 
 ```ts
-import { byRequest } from "firefly-js/http";
+import { byRequest } from "firefly-limiter/http";
 
 const api = new ApiClient({
-	baseUrl: "https://api.acme.com/v1",
-	transport: transport(
-		fetch,
-		byRequest((request) =>
-			request.url.includes("/payments") ? payments.policy : reads.policy
-		)
-	),
+ baseUrl: "https://api.acme.com/v1",
+ transport: transport(
+  fetch,
+  byRequest((request) =>
+   request.url.includes("/payments") ? payments.policy : reads.policy
+  )
+ ),
 });
 ```
 
@@ -140,7 +140,7 @@ nothing.
 ## Working with Aphid and dung beetle
 
 Both templates end their boundary section the same way: the excluded behaviour
-goes in a decorator around `ApiClient`'s transport. `firefly-js/http` is that
+goes in a decorator around `ApiClient`'s transport. `firefly-limiter/http` is that
 decorator, written out.
 
 The dependency that matters runs in the other direction, and it should not
@@ -164,18 +164,18 @@ error is its cause:
 
 ```ts
 try {
-	await api.request(listInvoices());
+ await api.request(listInvoices());
 } catch (error) {
-	if (error instanceof TransportError && error.cause instanceof TimeoutError) {
-		// the deadline, not the network
-	}
-	if (error instanceof TransportError && error.cause instanceof CircuitOpenError) {
-		// nothing was sent; error.cause.retryAt says when one call will be tried
-	}
-	if (error instanceof HttpError) {
-		// a status the policy did not retry, or retried until it ran out
-	}
-	throw error;
+ if (error instanceof TransportError && error.cause instanceof TimeoutError) {
+  // the deadline, not the network
+ }
+ if (error instanceof TransportError && error.cause instanceof CircuitOpenError) {
+  // nothing was sent; error.cause.retryAt says when one call will be tried
+ }
+ if (error instanceof HttpError) {
+  // a status the policy did not retry, or retried until it ran out
+ }
+ throw error;
 }
 ```
 

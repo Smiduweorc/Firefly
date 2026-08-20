@@ -30,7 +30,7 @@ writing logs has taken back the decisions its consumer wrapped it to keep.
 | Excluded | Why | Where it goes |
 | --- | --- | --- |
 | Performing I/O | A harness that knows how to send a request has an opinion about the network, and pins a runtime for everyone downstream. | The action you pass in: a `fetch`, an `ApiClient` call, a database query, anything returning a promise. |
-| Deciding what counts as a failure | Whether a rejection is worth repeating is domain knowledge. A 409 is fatal to one caller and expected by another, and guessing here makes the guess unremovable. | Your `shouldRetry`. `firefly-js/http` ships an HTTP-shaped one you opt into by importing it. |
+| Deciding what counts as a failure | Whether a rejection is worth repeating is domain knowledge. A 409 is fatal to one caller and expected by another, and guessing here makes the guess unremovable. | Your `shouldRetry`. `firefly-limiter/http` ships an HTTP-shaped one you opt into by importing it. |
 | Replacing your errors | If the harness wrapped every failure in its own class, `error instanceof HttpError` would stop working one layer up, and the wrapper would have destroyed the reporting the layer below did carefully. | Exhausted retries rethrow the last failure unchanged. Only Firefly's own refusals are Firefly errors. |
 | Logging, metrics, progress output | A library that writes to stdout has taken something that belongs to the application. | `onEvent`, which sees every decision and is called with a plain value. |
 | Reading configuration from the environment | An import that reads `process.env` breaks in browsers and bundlers, and makes the package untestable without mutating globals. | The options object, where the numbers are visible at the call site. |
@@ -65,23 +65,23 @@ and pick one with `byRequest`:
 const breakers = new Map<string, CircuitBreaker>();
 
 const forHost = (host: string): CircuitBreaker => {
-	const existing = breakers.get(host);
-	if (existing) {
-		return existing;
-	}
-	const breaker = new CircuitBreaker({ threshold: 5, resetAfter: 30_000 });
-	breakers.set(host, breaker);
-	return breaker;
+ const existing = breakers.get(host);
+ if (existing) {
+  return existing;
+ }
+ const breaker = new CircuitBreaker({ threshold: 5, resetAfter: 30_000 });
+ breakers.set(host, breaker);
+ return breaker;
 };
 
 const retrying = retry({
-	attempts: 3,
-	backoff: exponential({ base: 200, max: 10_000 }),
-	shouldRetry: retryableTransportError,
+ attempts: 3,
+ backoff: exponential({ base: 200, max: 10_000 }),
+ shouldRetry: retryableTransportError,
 });
 
 const policy = byRequest((request) =>
-	stack(retrying, forHost(new URL(request.url).host).policy, timeout(2_000))
+ stack(retrying, forHost(new URL(request.url).host).policy, timeout(2_000))
 );
 ```
 

@@ -10,8 +10,8 @@ interface, so a test can substitute it:
 
 ```ts
 interface Clock {
-	now(): number;
-	sleep(ms: number, signal?: AbortSignal): Promise<void>;
+ now(): number;
+ sleep(ms: number, signal?: AbortSignal): Promise<void>;
 }
 ```
 
@@ -25,79 +25,79 @@ There is no test double in the published surface, because a clock you control
 is twenty lines and a clock you cannot see inside is worse than one you wrote:
 
 ```ts
-import type { Clock } from "firefly-js";
+import type { Clock } from "firefly-limiter";
 
 interface Timer {
-	readonly at: number;
-	readonly fire: () => void;
+ readonly at: number;
+ readonly fire: () => void;
 }
 
 const flush = (): Promise<void> =>
-	new Promise((resolve) => setImmediate(resolve));
+ new Promise((resolve) => setImmediate(resolve));
 
 export class VirtualClock implements Clock {
-	#now = 0;
-	#timers = new Set<Timer>();
+ #now = 0;
+ #timers = new Set<Timer>();
 
-	now(): number {
-		return this.#now;
-	}
+ now(): number {
+  return this.#now;
+ }
 
-	sleep(ms: number, signal?: AbortSignal): Promise<void> {
-		if (signal?.aborted) {
-			return Promise.reject(signal.reason);
-		}
+ sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) {
+   return Promise.reject(signal.reason);
+  }
 
-		return new Promise((resolve, reject) => {
-			const timer: Timer = {
-				at: this.#now + ms,
-				fire: () => {
-					signal?.removeEventListener("abort", abort);
-					resolve();
-				},
-			};
+  return new Promise((resolve, reject) => {
+   const timer: Timer = {
+    at: this.#now + ms,
+    fire: () => {
+     signal?.removeEventListener("abort", abort);
+     resolve();
+    },
+   };
 
-			const abort = (): void => {
-				this.#timers.delete(timer);
-				reject(signal?.reason);
-			};
+   const abort = (): void => {
+    this.#timers.delete(timer);
+    reject(signal?.reason);
+   };
 
-			this.#timers.add(timer);
-			signal?.addEventListener("abort", abort, { once: true });
-		});
-	}
+   this.#timers.add(timer);
+   signal?.addEventListener("abort", abort, { once: true });
+  });
+ }
 
-	/** Moves time forward by `ms`, firing whatever falls due on the way. */
-	async advance(ms: number): Promise<void> {
-		const target = this.#now + ms;
+ /** Moves time forward by `ms`, firing whatever falls due on the way. */
+ async advance(ms: number): Promise<void> {
+  const target = this.#now + ms;
 
-		for (;;) {
-			await flush();
+  for (;;) {
+   await flush();
 
-			let next: number | undefined;
-			for (const timer of this.#timers) {
-				if (next === undefined || timer.at < next) {
-					next = timer.at;
-				}
-			}
+   let next: number | undefined;
+   for (const timer of this.#timers) {
+    if (next === undefined || timer.at < next) {
+     next = timer.at;
+    }
+   }
 
-			if (next === undefined || next > target) {
-				break;
-			}
+   if (next === undefined || next > target) {
+    break;
+   }
 
-			this.#now = Math.max(this.#now, next);
+   this.#now = Math.max(this.#now, next);
 
-			for (const timer of [...this.#timers]) {
-				if (timer.at <= this.#now) {
-					this.#timers.delete(timer);
-					timer.fire();
-				}
-			}
-		}
+   for (const timer of [...this.#timers]) {
+    if (timer.at <= this.#now) {
+     this.#timers.delete(timer);
+     timer.fire();
+    }
+   }
+  }
 
-		this.#now = target;
-		await flush();
-	}
+  this.#now = target;
+  await flush();
+ }
 }
 ```
 
@@ -128,11 +128,11 @@ inferring it from timing:
 const events: FireflyEvent[] = [];
 
 const policy = retry({
-	attempts: 3,
-	backoff: constant(1_000, { jitter: "none" }),
-	shouldRetry: retryAnything,
-	onEvent: (event) => events.push(event),
-	clock,
+ attempts: 3,
+ backoff: constant(1_000, { jitter: "none" }),
+ shouldRetry: retryAnything,
+ onEvent: (event) => events.push(event),
+ clock,
 });
 
 const result = policy(failsTwiceThenSucceeds)();
@@ -140,8 +140,8 @@ await clock.advance(5_000);
 
 await result;
 assert.deepEqual(
-	events.map((event) => event.type),
-	["attempt", "retry", "attempt", "retry", "attempt"]
+ events.map((event) => event.type),
+ ["attempt", "retry", "attempt", "retry", "attempt"]
 );
 ```
 
@@ -178,21 +178,21 @@ test lets it go. Two shapes cover almost everything:
 ```ts
 /** Never settles on its own; rejects when its signal aborts. */
 const pending = (signal: AbortSignal): Promise<never> =>
-	new Promise((_, reject) => {
-		signal.addEventListener("abort", () => reject(signal.reason), {
-			once: true,
-		});
-	});
+ new Promise((_, reject) => {
+  signal.addEventListener("abort", () => reject(signal.reason), {
+   once: true,
+  });
+ });
 
 /** A promise the test settles by hand. */
 function deferred<T>() {
-	let resolve!: (value: T) => void;
-	let reject!: (reason: unknown) => void;
-	const promise = new Promise<T>((res, rej) => {
-		resolve = res;
-		reject = rej;
-	});
-	return { promise, resolve, reject };
+ let resolve!: (value: T) => void;
+ let reject!: (reason: unknown) => void;
+ const promise = new Promise<T>((res, rej) => {
+  resolve = res;
+  reject = rej;
+ });
+ return { promise, resolve, reject };
 }
 ```
 

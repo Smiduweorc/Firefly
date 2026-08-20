@@ -15,15 +15,15 @@ dependency. Here the state and the scope are the same object: one per upstream,
 constructed where you can see it, shared by everything that talks to it.
 
 ```ts
-import { Dependency, exponential, retryAnything } from "firefly-js";
+import { Dependency, exponential, retryAnything } from "firefly-limiter";
 
 export const payments = new Dependency({
-	name: "payments",
-	attempts: 3,
-	backoff: exponential({ base: 200, max: 10_000 }),
-	shouldRetry: retryAnything,
-	deadline: 5_000,
-	breaker: { threshold: 5, resetAfter: 30_000 },
+ name: "payments",
+ attempts: 3,
+ backoff: exponential({ base: 200, max: 10_000 }),
+ shouldRetry: retryAnything,
+ deadline: 5_000,
+ breaker: { threshold: 5, resetAfter: 30_000 },
 });
 ```
 
@@ -64,7 +64,7 @@ one.
 `shouldRetry` has no default either. Whether a rejection is worth repeating is
 the one thing this package cannot know: a 409 is fatal to one caller and
 expected by another. `retryAnything` is how you say "repeat everything" and
-mean it. Under a `firefly-js/http` transport, use `retryableTransportError`, which
+mean it. Under a `firefly-limiter/http` transport, use `retryableTransportError`, which
 already classified the response.
 
 ## Optional options
@@ -105,9 +105,9 @@ queue.push(charge);
 
 ```ts
 const today = await rates.run(readRates, {
-	share: "today",
-	fallback: () => cached,
-	signal: request.signal,
+ share: "today",
+ fallback: () => cached,
+ signal: request.signal,
 });
 ```
 
@@ -135,13 +135,13 @@ app.get("/health", () => payments.health());
 
 ```ts
 {
-	name: "payments",
-	circuit: "closed",  // or "open", "half-open", or "none" if breaker: false
-	failures: 0,        // what the breaker is currently counting
-	inFlight: 0,
-	queued: 0,
-	tokens: 10,         // only when there is a rate limiter
-	retries: 10,        // only when there is a retry budget
+ name: "payments",
+ circuit: "closed",  // or "open", "half-open", or "none" if breaker: false
+ failures: 0,        // what the breaker is currently counting
+ inFlight: 0,
+ queued: 0,
+ tokens: 10,         // only when there is a rate limiter
+ retries: 10,        // only when there is a retry budget
 }
 ```
 

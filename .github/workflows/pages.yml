@@ -42,9 +42,14 @@ jobs:
       - name: Build the site
         run: npm run docs
 
+      # enablement turns Pages on via the API if the repository has not had it
+      # switched on yet, so a fresh clone of this repo deploys without a manual
+      # trip through Settings.
       - name: Configure Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload the site
         if: github.event_name != 'pull_request'
