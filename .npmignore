@@ -1,0 +1,17 @@
+# Backstop for the "files" allowlist in package.json, which already limits the
+# published tarball to dist/.
+/src
+/tests
+/index.ts
+/docs
+node_modules
+eslint*
+tsconfig.json
+typedoc.json
+cliff.toml
+lefthook.yml
+commitlint.config.js
+release.sh
+.nvmrc
+.vscode
+.github
