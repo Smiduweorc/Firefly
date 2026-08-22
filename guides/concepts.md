@@ -95,9 +95,11 @@ deadline more than a stopwatch.
 
 - The signal you pass to a wrapped action is the **caller's** signal. Aborting
   it abandons the whole operation.
-- `timeout` and `hedge` derive a **per-attempt** signal with
-  `AbortSignal.any`, so an attempt is aborted either when the caller gives up
-  or when that attempt alone is abandoned.
+- `timeout` and `hedge` derive a **per-attempt** signal, so an attempt is
+  aborted either when the caller gives up or when that attempt alone is
+  abandoned. The link lasts as long as the attempt: once the call has settled
+  the attempt's signal stops following the caller, so a signal you hand to
+  every call — a shutdown signal, say — does not collect a listener per call.
 - An action that watches its signal stops working when the attempt is
   abandoned. An action that ignores its signal cannot be cancelled by anything,
   here or elsewhere, and the rejection is still on time.

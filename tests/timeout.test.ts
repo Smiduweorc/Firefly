@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { getEventListeners } from "node:events";
 import { test } from "node:test";
 
 import {
@@ -131,4 +132,18 @@ test("a deadline shorter than the remaining budget is left alone", async () => {
 	await rejects;
 
 	assert.equal(clock.now(), 500);
+});
+
+test("detaches from the caller's signal once the call has settled", async () => {
+	const clock = new VirtualClock();
+	const caller = new AbortController();
+	const wrapped = timeout(1_000, { clock })(async () => 42);
+
+	for (let call = 0; call < 10; call++) {
+		assert.equal(await wrapped(caller.signal), 42);
+	}
+
+	// A signal handed to every call — a shutdown signal, say — must not collect
+	// a listener per call.
+	assert.equal(getEventListeners(caller.signal, "abort").length, 0);
 });
