@@ -2,6 +2,7 @@ import { systemClock, type Clock } from "./clock.js";
 import { BulkheadFullError } from "./errors.js";
 import { emit, type EventSink } from "./events.js";
 import { tag, type Action, type Policy, type Wrapped } from "./policy.js";
+import { cancelled } from "./signal.js";
 
 /** How a bulkhead moves its own limit in response to what it sees. */
 export interface AdaptiveConcurrency {
@@ -196,7 +197,7 @@ export class Bulkhead {
 				}
 			});
 		} finally {
-			expiry.abort();
+			expiry.abort(cancelled);
 		}
 	}
 

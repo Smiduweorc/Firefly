@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { getEventListeners } from "node:events";
 import { test } from "node:test";
 
 import {
@@ -262,4 +263,21 @@ test("a dependency shares one budget between its retries and its hedges", async 
 
 	// Two tokens: one hedged branch and one retry, not four of each.
 	assert.equal(calls, 3);
+});
+
+test("detaches every branch from the caller's signal once the call has settled", async () => {
+	const clock = new VirtualClock();
+	const caller = new AbortController();
+
+	for (let call = 0; call < 10; call++) {
+		const { action } = answersIn(clock, [50, 10]);
+		const running = hedge({ attempts: 3, delay: 20, clock })(action)(caller.signal);
+
+		await clock.runAll();
+		assert.equal(await running, "answer 2");
+	}
+
+	// The winner is left alone but detached: the caller's signal collects
+	// nothing across calls, hedged or not.
+	assert.equal(getEventListeners(caller.signal, "abort").length, 0);
 });

@@ -3,6 +3,7 @@ import { systemClock, type Clock } from "./clock.js";
 import { emit, type EventSink } from "./events.js";
 import { TimeoutError } from "./errors.js";
 import { tag, type Action, type Policy, type Wrapped } from "./policy.js";
+import { cancelled, derive } from "./signal.js";
 
 /** Configuration for {@link timeout}. */
 export interface TimeoutOptions {
@@ -31,10 +32,9 @@ export function timeout(ms: number, options: TimeoutOptions = {}): Policy {
 	const policy: Policy = <T>(action: Action<T>): Wrapped<T> =>
 		async (signal?: AbortSignal): Promise<T> => {
 			const outer = signal ?? new AbortController().signal;
-			const deadline = new AbortController();
-			const attemptSignal = AbortSignal.any([outer, deadline.signal]);
+			const attempt = derive(outer);
 
-			inherit(outer, attemptSignal);
+			inherit(outer, attempt.signal);
 
 			const timer = new AbortController();
 			const started = clock.now();
@@ -50,7 +50,7 @@ export function timeout(ms: number, options: TimeoutOptions = {}): Policy {
 					const error = new TimeoutError({ ms: limit, elapsed });
 
 					emit(options.onEvent, outer, { type: "timeout", ms: limit, elapsed });
-					deadline.abort(error);
+					attempt.abort(error);
 					throw error;
 				},
 				// The attempt settled first, so the timer was cancelled and this
@@ -59,9 +59,10 @@ export function timeout(ms: number, options: TimeoutOptions = {}): Policy {
 			);
 
 			try {
-				return await Promise.race([action(attemptSignal), expiry]);
+				return await Promise.race([action(attempt.signal), expiry]);
 			} finally {
-				timer.abort();
+				timer.abort(cancelled);
+				attempt.release();
 			}
 		};
 

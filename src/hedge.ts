@@ -5,6 +5,7 @@ import { HedgeAbandonedError } from "./errors.js";
 import { emit, type EventSink } from "./events.js";
 import { tag, type Action, type Policy, type Wrapped } from "./policy.js";
 import type { RetryBudget } from "./retry-budget.js";
+import { cancelled, derive, type Derived } from "./signal.js";
 
 /** Configuration for {@link hedge}. */
 export interface HedgeOptions {
@@ -79,7 +80,7 @@ export function hedge(options: HedgeOptions): Policy {
 	const policy: Policy = <T>(action: Action<T>): Wrapped<T> =>
 		async (signal?: AbortSignal): Promise<T> => {
 			const outer = signal ?? new AbortController().signal;
-			const controllers = new Map<number, AbortController>();
+			const branches = new Map<number, Derived>();
 			const running = new Map<number, Promise<Outcome<T>>>();
 
 			let started = 0;
@@ -106,17 +107,16 @@ export function hedge(options: HedgeOptions): Policy {
 
 			const begin = (): void => {
 				const index = started++;
-				const controller = new AbortController();
-				controllers.set(index, controller);
+				const branch = derive(outer);
+				branches.set(index, branch);
 
 				if (index > 0) {
 					emit(options.onEvent, outer, { type: "hedge", attempt: index + 1 });
 				}
 
-				const branch = AbortSignal.any([outer, controller.signal]);
-				inherit(outer, branch);
+				inherit(outer, branch.signal);
 
-				running.set(index, settle(index, action(branch)));
+				running.set(index, settle(index, action(branch.signal)));
 			};
 
 			try {
@@ -134,7 +134,7 @@ export function hedge(options: HedgeOptions): Policy {
 							])
 							: await Promise.race(waiting);
 
-					timer.abort();
+					timer.abort(cancelled);
 
 					// The delay passed before anything answered, so add an attempt.
 					if (outcome === undefined) {
@@ -167,11 +167,13 @@ export function hedge(options: HedgeOptions): Policy {
 			} finally {
 				// Everything except the answer we kept: the winner's signal stays
 				// intact, because aborting it would cut off a result that is still
-				// being read.
-				for (const [index, controller] of controllers) {
+				// being read. Every branch is detached from the caller either way.
+				for (const [index, branch] of branches) {
 					if (index !== winner) {
-						controller.abort(new HedgeAbandonedError({ attempt: index + 1 }));
+						branch.abort(new HedgeAbandonedError({ attempt: index + 1 }));
 					}
+
+					branch.release();
 				}
 			}
 		};
