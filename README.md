@@ -46,15 +46,15 @@ npm install firefly-limiter
 **1. Describe the thing you call.** A `Dependency` is one upstream and every decision you have made about calling it. Build it once, next to the client it protects, and share it.
 
 ```ts
-import { Dependency, exponential, retryAnything } from "firefly-";
+import { Dependency, exponential, retryAnything } from "firefly-limiter";
 
 export const rates = new Dependency({
- name: "rates",
- attempts: 3,
- backoff: exponential({ base: 200, max: 5_000 }),
- shouldRetry: retryAnything,
- deadline: 2_000,
- breaker: { threshold: 5, resetAfter: 30_000 },
+	name: "rates",
+	attempts: 3,
+	backoff: exponential({ base: 200, max: 5_000 }),
+	shouldRetry: retryAnything,
+	deadline: 2_000,
+	breaker: { threshold: 5, resetAfter: 30_000 },
 });
 ```
 
@@ -70,8 +70,8 @@ const today = await rates.run((signal) => readRates(signal));
 
 ```ts
 const today = await rates.run(readRates, {
- share: "today",         // twenty callers, one request
- fallback: () => cached, // an answer for a call that failed all the way through
+	share: "today",         // twenty callers, one request
+	fallback: () => cached, // an answer for a call that failed all the way through
 });
 ```
 
@@ -81,8 +81,8 @@ const today = await rates.run(readRates, {
 import { retryableTransportError, transport } from "firefly-limiter/http";
 
 const api = new ApiClient({
- baseUrl: "https://api.acme.com/v1",
- transport: transport(fetch, rates.policy),
+	baseUrl: "https://api.acme.com/v1",
+	transport: transport(fetch, rates.policy),
 });
 ```
 
